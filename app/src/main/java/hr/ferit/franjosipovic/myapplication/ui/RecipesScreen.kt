@@ -3,9 +3,9 @@ package hr.ferit.franjosipovic.myapplication.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -18,18 +18,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import hr.ferit.franjosipovic.myapplication.R
+import hr.ferit.franjosipovic.myapplication.data.Recipe
+import hr.ferit.franjosipovic.myapplication.data.recipes
 import hr.ferit.franjosipovic.myapplication.ui.theme.DarkGray
 import hr.ferit.franjosipovic.myapplication.ui.theme.LightGray
 import hr.ferit.franjosipovic.myapplication.ui.theme.Pink
 import hr.ferit.franjosipovic.myapplication.ui.theme.White
 
-@Preview(showBackground = true)
 @Composable
-fun RecipesScreen() {
+fun RecipesScreen(
+    navigation: NavHostController
+) {
     Column(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -41,7 +45,7 @@ fun RecipesScreen() {
         )
         SearchBar(iconResource = R.drawable.ic_search, labelText = "Search")
         RecipeCategories()
-        Recipes()
+        RecipeList(navigation = navigation, recipes = recipes)
         IconButton(iconResource = R.drawable.ic_plus, onClick = { }, text = "Add new recipe")
     }
 }
@@ -177,11 +181,14 @@ fun RecipeCategories() {
 fun IconButton(
     @DrawableRes iconResource: Int,
     onClick: () -> Unit,
+    colors: ButtonColors = ButtonDefaults.buttonColors(backgroundColor = Pink),
+    textColor: Color = Color.White,
+    iconColor: Color = White,
     text: String
 ) {
     Button(
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Pink),
+        colors = colors,
         shape = RoundedCornerShape(20.dp)
     ) {
         Row {
@@ -191,18 +198,19 @@ fun IconButton(
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Light,
-                    color = White
+                    color = textColor
                 )
             )
             Spacer(Modifier.width(2.dp))
             Icon(
                 painter = painterResource(id = iconResource),
-                contentDescription = text, tint = White
+                contentDescription = text, tint = iconColor
             )
 
         }
     }
 }
+
 
 @Composable
 fun Chip(
@@ -234,11 +242,13 @@ fun RecipeCard(
     @DrawableRes image: Int,
     title: String,
     time: String,
-    ingredientsCount: Int
+    ingredientsCount: Int,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .size(width = 215.dp, height = 326.dp),
+            .size(width = 215.dp, height = 326.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp)
     ) {
         Box(
@@ -255,9 +265,9 @@ fun RecipeCard(
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
-                Column() {
+                Column {
                     Text(title, style = TextStyle(color = White, fontSize = 14.sp))
-                    Row() {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Chip(text = time)
                         Chip(text = "$ingredientsCount ingredients")
                     }
@@ -268,22 +278,52 @@ fun RecipeCard(
 }
 
 @Composable
-fun Recipes() {
-    val scrollState = rememberScrollState()
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-            .fillMaxWidth()
-            .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        RecipeCard(
-            image = R.drawable.strawberry_pie_2,
-            title = "Pita od jagoda",
-            time = "30 min",
-            4
-        )
-        RecipeCard(image = R.drawable.baklava, title = "Baklava", time = "45 min", 6)
+fun RecipeList(
+    recipes: List<Recipe>,
+    navigation: NavController
+) {
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = "7 recipes",
+                style = TextStyle(
+                    color = Color.DarkGray, fontSize =
+                    14.sp
+                )
+            )
+            Icon(
+                painter = painterResource(id = R.drawable.ic_flame),
+                contentDescription = "Flame",
+                tint = Color.DarkGray,
+                modifier = Modifier
+                    .width(18.dp)
+                    .height(18.dp)
+            )
+        }
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            items(recipes.size) {
+                RecipeCard(
+                    image = recipes[it].image,
+                    title = recipes[it].title,
+                    time = recipes[it].cookingTime,
+                    ingredientsCount = recipes[it].ingredients.size
+                ) {
+                    navigation.navigate(
+                        Routes.getRecipeDetailsPath(it)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+        }
     }
 }
