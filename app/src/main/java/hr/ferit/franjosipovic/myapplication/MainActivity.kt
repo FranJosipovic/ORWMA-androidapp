@@ -16,6 +16,11 @@ import hr.ferit.franjosipovic.myapplication.ui.theme.MyApplicationTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent {
+            MyApplicationTheme {
+                NavigationController()
+            }
+        }
     }
 }
 
